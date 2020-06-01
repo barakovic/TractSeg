@@ -26,7 +26,10 @@ def main():
                         help="Folder containing the TractSeg tractograms (normally '.../tractseg_output/TOM_tracking')",
                         required=True)
 
-    parser.add_argument("-o", metavar="csv_output", dest="csv_file_out",
+    parser.add_argument("-om", metavar="csv_output_m", dest="csv_file_out_m",
+                        help="CSV output file containing the results", required=True)
+
+    parser.add_argument("-os", metavar="csv_output_s", dest="csv_file_out_s",
                         help="CSV output file containing the results", required=True)
 
     parser.add_argument("-e", metavar="endings_dir", dest="endings_dir",
@@ -80,7 +83,8 @@ def main():
     else:
         bundles = dataset_specific_utils.get_bundle_names("All_tractometry")[1:]
 
-    results = []
+    results_mean = []
+    results_std = []
     for bundle in tqdm(bundles):
         if args.peak_length:
             predicted_peaks = nib.load(join(args.TOM_dir, bundle + ".nii.gz")).get_data()
@@ -117,14 +121,17 @@ def main():
         mean = mean[1:-1]
         std = std[1:-1]
 
-        results.append(mean)
+        results_mean.append(mean)
+        results_std.append(std)
+
 
     bundle_string = ""
     for bundle in bundles:
         bundle_string += bundle + ";"
     bundle_string = bundle_string[:-1]
 
-    np.savetxt(args.csv_file_out, np.array(results).transpose(), delimiter=";", header=bundle_string, comments="")
+    np.savetxt(args.csv_file_out_m, np.array(results_mean).transpose(), delimiter=";", header=bundle_string, comments="")
+    np.savetxt(args.csv_file_out_s, np.array(results_std).transpose(), delimiter=";", header=bundle_string, comments="")
 
     # Notes on reproducibility
     # - map_coordinates, QuickBundles and cKDTree are deterministic for the same input streamlines
